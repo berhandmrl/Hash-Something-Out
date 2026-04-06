@@ -1,5 +1,5 @@
 # Berhan Demirel
-# Third poor function attempt with Linear Probing collision method, using basic ASCII addition
+# Fourth good function attempt with Linear Probing collision method, using a polynomial rolling hash
 
 import csv
 import time
@@ -11,23 +11,29 @@ class LinearProbingHashTable:
         self.table = [None] * capacity
         self.collisions = 0
 
-    # Calculates hash index by adding ASCII values (poor hash function)
-    def poor_hash(self, key):
+    # Calculates a stronger hash index using a prime multiplier to reduce clustering
+    def good_hash(self, key):
         if not key:
             return 0
             
         if not isinstance(key, str):
             key = str(key)
         
-        ascii_sum = sum(ord(char) for char in key)
-        return ascii_sum % self.capacity
+        hash_value = 0
+        prime = 31 # Prime number helps distribute strings evenly
+        
+        for char in key:
+            # Multiply by prime, add ASCII value, and modulo to prevent overflow
+            hash_value = (hash_value * prime + ord(char)) % self.capacity
+            
+        return hash_value
 
     # Inserts new pair, if collision handle it using linear probing
     def insert(self, key, value):
         if not key: 
             return
 
-        index = self.poor_hash(key)
+        index = self.good_hash(key)
 
         # If the spot is empty, place it right there
         if self.table[index] is None:
