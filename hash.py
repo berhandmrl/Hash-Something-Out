@@ -1,5 +1,5 @@
 # Berhan Demirel
-# First poor function attempt with LinkedList collision method, using very basic ASCII addition method for calculation
+# Second good function attempt with LinkedList collision method, using a polynomial rolling hash
 
 import csv
 import time
@@ -18,20 +18,29 @@ class LinkedListHashTable:
         self.table = [None] * capacity
         self.collisions = 0
 
-    # Calculates hash index by adding ASCII values
-    def poor_hash(self, key):
+    # Calculates a stronger hash index using a prime multiplier to reduce clustering
+    def good_hash(self, key):
+        if not key:
+            return 0
+            
         if not isinstance(key, str):
             key = str(key)
         
-        ascii_sum = sum(ord(char) for char in key)
-        return ascii_sum % self.capacity
+        hash_value = 0
+        prime = 31 # Prime number helps distribute strings evenly
+        
+        for char in key:
+            # Multiply by prime, add ASCII value, and modulo to prevent overflow
+            hash_value = (hash_value * prime + ord(char)) % self.capacity
+            
+        return hash_value
 
     # Inserts new pair, if collision handle it
     def insert(self, key, value):
         if not key: 
             return
 
-        index = self.poor_hash(key)
+        index = self.good_hash(key)
         new_node = Node(key, value)
 
         if self.table[index] is None:
@@ -45,7 +54,7 @@ class LinkedListHashTable:
                 current = current.next
             current.next = new_node
 
-    # Calculates  number of empty buckets remaining in table
+    # Calculates number of empty buckets remaining in table
     def get_wasted_space(self):
         return sum(1 for bucket in self.table if bucket is None)
 
@@ -76,7 +85,7 @@ def load_data_and_build_tables(filename):
     print("Empty Buckets:", title_table.get_wasted_space(), "out of", table_capacity, "\n")
 
     print("Table 2, Movie Quote as Key")
-    print("Build Time:", round(end_time_quotes - start_time_quotes, 4), "seconds")
+    print("Build Time:", round(end_time_quotes - start_time_quotes, 4), "sec")
     print("Collisions:", quote_table.collisions)
     print("Empty Buckets:", quote_table.get_wasted_space(), "out of", table_capacity)
 
