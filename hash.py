@@ -1,58 +1,48 @@
 # Berhan Demirel
-# Second good function attempt with LinkedList collision method, using a polynomial rolling hash
+# Third poor function attempt with Linear Probing collision method, using basic ASCII addition
 
 import csv
 import time
 
-class Node:
-    # Initializes a new node to store a key, value, and reference to the next node
-    def __init__(self, key, value):
-        self.key = key
-        self.value = value
-        self.next = None
-
-class LinkedListHashTable:
+class LinearProbingHashTable:
     # Initializes the hash table with a specific capacity and tracking stats
     def __init__(self, capacity):
         self.capacity = capacity
         self.table = [None] * capacity
         self.collisions = 0
 
-    # Calculates a stronger hash index using a prime multiplier to reduce clustering
-    def good_hash(self, key):
+    # Calculates hash index by adding ASCII values (poor hash function)
+    def poor_hash(self, key):
         if not key:
             return 0
             
         if not isinstance(key, str):
             key = str(key)
         
-        hash_value = 0
-        prime = 31 # Prime number helps distribute strings evenly
-        
-        for char in key:
-            # Multiply by prime, add ASCII value, and modulo to prevent overflow
-            hash_value = (hash_value * prime + ord(char)) % self.capacity
-            
-        return hash_value
+        ascii_sum = sum(ord(char) for char in key)
+        return ascii_sum % self.capacity
 
-    # Inserts new pair, if collision handle it
+    # Inserts new pair, if collision handle it using linear probing
     def insert(self, key, value):
         if not key: 
             return
 
-        index = self.good_hash(key)
-        new_node = Node(key, value)
+        index = self.poor_hash(key)
 
+        # If the spot is empty, place it right there
         if self.table[index] is None:
-            self.table[index] = new_node
+            self.table[index] = (key, value)
         else:
+            # If the spot is taken, count a collision and start probing
             self.collisions += 1
-            current = self.table[index]
+            current_index = (index + 1) % self.capacity
             
-            while current.next:
+            # Keep stepping forward until we find an empty slot
+            while self.table[current_index] is not None:
                 self.collisions += 1
-                current = current.next
-            current.next = new_node
+                current_index = (current_index + 1) % self.capacity
+                
+            self.table[current_index] = (key, value)
 
     # Calculates number of empty buckets remaining in table
     def get_wasted_space(self):
@@ -62,8 +52,8 @@ class LinkedListHashTable:
 def load_data_and_build_tables(filename):
     table_capacity = 30000 
     
-    title_table = LinkedListHashTable(table_capacity)
-    quote_table = LinkedListHashTable(table_capacity)
+    title_table = LinearProbingHashTable(table_capacity)
+    quote_table = LinearProbingHashTable(table_capacity)
 
     start_time_titles = time.time()
     with open(filename, mode='r', encoding='utf-8') as file:
